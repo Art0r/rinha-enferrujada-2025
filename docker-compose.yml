@@ -1,0 +1,107 @@
+services:
+  memcached:
+    image: memcached:1.6.38-alpine
+    hostname: memcached-rinha
+    ports: 
+      - "11211:11211"
+    networks:
+      - application-internal
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: "50MB"
+
+  nginx:
+    image: nginx:1.29.0-alpine
+    hostname: nginx-rinha
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "9999:9999"
+    depends_on:
+      - application-node-1
+      - application-node-2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9999/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 20s
+    networks:
+      - application-internal
+      - application-external
+    deploy:
+      resources:
+        limits:
+          cpus: "0.15"
+          memory: "60MB"
+
+  database:
+    image: postgres:17.5-alpine
+    hostname: database-rinha
+    environment:
+      - POSTGRES_USER=rinha-enferrujada
+      - POSTGRES_DB=rinha-enferrujada
+      - POSTGRES_PASSWORD=rinha-enferrujada
+    ports:
+      - "5432:5432"
+    networks:
+      - application-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rinha-enferrujada -d rinha-enferrujada"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s 
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "165MB"
+
+  application-node-1:
+    build: .
+    hostname: application-node-1
+    container_name: application-node-1
+    environment:
+      - PORT=8080
+      - WORKERS=2
+      - CACHE_URL=memcached-rinha:11211
+    networks:
+      - application-internal
+    depends_on:
+      database:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "30MB" 
+  
+  application-node-2:
+    build: .
+    hostname: application-node-2
+    container_name: application-node-2
+    environment:
+      - PORT=8081
+      - WORKERS=2
+      - CACHE_URL=memcached-rinha:11211
+    networks:
+      - application-internal
+    depends_on:
+      database:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "30MB" 
+  
+
+networks:
+  application-internal:
+    driver: bridge
+  application-external:
+    driver: bridge
+
