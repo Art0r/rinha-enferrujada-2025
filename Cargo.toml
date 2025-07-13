@@ -5,12 +5,14 @@ edition = "2024"
 
 [dependencies]
 actix-web = "4"
-log = "0.4.26"
 serde = { version = "1.0.218", features = ["derive"] }
-serde_json = "1"
 pq-sys = { version = "0.6", features = ["bundled"] }
 openssl-sys = { version = "0.9.100", features = ["vendored"] }
 dotenvy = "0.15"
 thiserror = "2.0.11"
-diesel = { version = "2.2.0", features = ["postgres", "r2d2", "uuid", "chrono"] }
+diesel = { version = "2.1.0", features = ["postgres", "r2d2", "uuid", "chrono", "numeric", "serde_json"] }
 env_logger = "0.11.6"
+memcache = "0.18.0"
+chrono = { version = "0.4.41", features = ["serde"] }
+uuid = { version = "1.17.0", features = ["v4", "serde"] }
+log = "0.4.27"

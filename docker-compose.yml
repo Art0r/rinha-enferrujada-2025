@@ -68,6 +68,9 @@ services:
       - PORT=8080
       - WORKERS=2
       - CACHE_URL=memcached-rinha:11211
+      - DB_USER=rinha-enferrujada
+      - DB_NAME=rinha-enferrujada
+      - DB_PASSWORD=rinha-enferrujada
     networks:
       - application-internal
     depends_on:
@@ -87,6 +90,9 @@ services:
       - PORT=8081
       - WORKERS=2
       - CACHE_URL=memcached-rinha:11211
+      - DB_USER=rinha-enferrujada
+      - DB_NAME=rinha-enferrujada
+      - DB_PASSWORD=rinha-enferrujada
     networks:
       - application-internal
     depends_on:
