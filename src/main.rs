@@ -48,7 +48,10 @@ async fn main() -> std::io::Result<()> {
             //     .show_files_listing()
             //     .use_last_modified(true)
             // )
-            .service(crate::payments::views::list_payments)
+            .service(
+                web::scope("")
+                    .configure(crate::payments::routes::payment_routes)
+            )
     })
     .bind(("0.0.0.0", port.parse().unwrap()))?
     .run()

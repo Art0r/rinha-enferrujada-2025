@@ -1,3 +1,4 @@
 mod models;
 mod services;
-pub mod views;
+mod views;
+pub mod routes;
