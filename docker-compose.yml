@@ -40,10 +40,7 @@ services:
   database:
     image: postgres:17.5-alpine
     hostname: database-rinha
-    environment:
-      - POSTGRES_USER=rinha-enferrujada
-      - POSTGRES_DB=rinha-enferrujada
-      - POSTGRES_PASSWORD=rinha-enferrujada
+    env_file: .env
     ports:
       - "5432:5432"
     networks:
@@ -60,17 +57,17 @@ services:
           cpus: "0.5"
           memory: "165MB"
 
-  application-node-1:
-    build: .
+  application-node-1: &application-node-1
+    build: 
+      context: .
+      args:
+        - DATABASE_URL=${DATABASE_URL}
     hostname: application-node-1
     container_name: application-node-1
+    env_file: .env
     environment:
       - PORT=8080
-      - WORKERS=2
-      - CACHE_URL=memcached-rinha:11211
-      - DB_USER=rinha-enferrujada
-      - DB_NAME=rinha-enferrujada
-      - DB_PASSWORD=rinha-enferrujada
+      - COST=1
     networks:
       - application-internal
     depends_on:
@@ -83,27 +80,33 @@ services:
           memory: "30MB" 
   
   application-node-2:
-    build: .
+    <<: *application-node-1
     hostname: application-node-2
     container_name: application-node-2
     environment:
       - PORT=8081
-      - WORKERS=2
-      - CACHE_URL=memcached-rinha:11211
-      - DB_USER=rinha-enferrujada
-      - DB_NAME=rinha-enferrujada
-      - DB_PASSWORD=rinha-enferrujada
+      - COST=2
+
+  migrations:
+    build:
+      context: Dockerfile.migrations
+      args:
+        - DATABASE_URL=${DATABASE_URL}
+    hostname: migrations
+    container_name: migrations
+    env_file: .env
     networks:
       - application-internal
     depends_on:
       database:
         condition: service_healthy
+    command: ["sh", "-c", "diesel setup && diesel migration run"]
     deploy:
       resources:
         limits:
-          cpus: "0.5"
-          memory: "30MB" 
-  
+          cpus: "0.25"
+          memory: "30MB"
+    restart: on-failure
 
 networks:
   application-internal:

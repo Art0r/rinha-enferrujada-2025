@@ -1,0 +1,14 @@
+# building step
+FROM rust:1-bookworm
+
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
+
+WORKDIR /usr/src/app
+
+COPY . .
+
+RUN cargo install diesel_cli --no-default-features --features postgres
+RUN diesel migration run
+
+

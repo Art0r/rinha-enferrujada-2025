@@ -6,8 +6,8 @@ use actix_web::{
     middleware::{self, Logger},
     web::{self},
 };
+use diesel::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
-use diesel::{PgConnection};
 use dotenvy::dotenv;
 use env_logger::Env;
 
@@ -48,10 +48,7 @@ async fn main() -> std::io::Result<()> {
             //     .show_files_listing()
             //     .use_last_modified(true)
             // )
-            .service(
-                web::scope("")
-                    .configure(crate::payments::routes::payment_routes)
-            )
+            .service(web::scope("").configure(crate::payments::routes::payment_routes))
     })
     .bind(("0.0.0.0", port.parse().unwrap()))?
     .run()
