@@ -1,7 +1,8 @@
 services:
-  memcached:
+  memcached-rinha:
     image: memcached:1.6.38-alpine
     hostname: memcached-rinha
+    container_name: memcached-rinha
     ports: 
       - "11211:11211"
     networks:
@@ -12,16 +13,19 @@ services:
           cpus: "0.25"
           memory: "50MB"
 
-  nginx:
+  nginx-rinha:
     image: nginx:1.29.0-alpine
     hostname: nginx-rinha
+    container_name: nginx-rinha
+    depends_on:
+      application-node-1: 
+        condition: service_started
+      application-node-2: 
+        condition: service_started
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
     ports:
       - "9999:9999"
-    depends_on:
-      - application-node-1
-      - application-node-2
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9999/health"]
       interval: 5s
@@ -30,16 +34,16 @@ services:
       start_period: 20s
     networks:
       - application-internal
-      - application-external
     deploy:
       resources:
         limits:
           cpus: "0.15"
           memory: "60MB"
 
-  database:
+  database-rinha:
     image: postgres:17.5-alpine
     hostname: database-rinha
+    container_name: database-rinha
     env_file: .env
     ports:
       - "5432:5432"
@@ -60,6 +64,7 @@ services:
   application-node-1: &application-node-1
     build: 
       context: .
+      dockerfile: Dockerfile
       args:
         - DATABASE_URL=${DATABASE_URL}
     hostname: application-node-1
@@ -71,8 +76,12 @@ services:
     networks:
       - application-internal
     depends_on:
-      database:
+      database-rinha:
         condition: service_healthy
+      memcached-rinha:
+        condition: service_started
+      migrations-rinha:
+        condition: service_completed_successfully 
     deploy:
       resources:
         limits:
@@ -87,18 +96,19 @@ services:
       - PORT=8081
       - COST=2
 
-  migrations:
+  migrations-rinha:
     build:
-      context: Dockerfile.migrations
+      context: .
+      dockerfile: Dockerfile.migrations
       args:
         - DATABASE_URL=${DATABASE_URL}
-    hostname: migrations
-    container_name: migrations
+    hostname: migrations-rinha
+    container_name: migrations-rinha
     env_file: .env
     networks:
       - application-internal
     depends_on:
-      database:
+      database-rinha:
         condition: service_healthy
     command: ["sh", "-c", "diesel setup && diesel migration run"]
     deploy:
@@ -111,6 +121,3 @@ services:
 networks:
   application-internal:
     driver: bridge
-  application-external:
-    driver: bridge
-
