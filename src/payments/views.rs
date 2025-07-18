@@ -1,6 +1,6 @@
-use actix_web::{get, web, HttpResponse};
-use crate::AppState;
 use crate::payments::services::PaymentServices;
+use crate::{AppState, payments::forms::NewPaymentForm};
+use actix_web::{HttpResponse, get, web};
 
 pub struct PaymentsViews {}
 
@@ -11,4 +11,15 @@ impl PaymentsViews {
             Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
         }
     }
+
+    pub async fn create(
+        data: web::Data<AppState>,
+        web::Json(form): web::Json<NewPaymentForm>,
+    ) -> HttpResponse {
+        match PaymentServices::create(data.pool.clone(), form) {
+            Ok(payment) => HttpResponse::Ok().json(payment),
+            Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+        }
+    }
 }
+

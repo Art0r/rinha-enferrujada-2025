@@ -2,7 +2,7 @@
 
 diesel::table! {
     payments (id) {
-        id -> Uuid,
+        id -> BigInt,
         correlationid -> Uuid,
         requestedat -> Timestamptz,
         amount -> Varchar,
